@@ -127,6 +127,17 @@
     if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(NUEVA).then(ok,respaldo); } else { respaldo(); }
   }
 
+  /* Dirección a abrir según el celular. En Android se abre en Chrome completo (con un enlace "intent"),
+     porque en la ventana interna de una app instalada el navegador no ofrece instalar la app nueva.
+     Si Chrome no está, Android abre la dirección normal (S.browser_fallback_url). En iPhone y el resto, enlace común. */
+  function urlDestino(ua){
+    if(/Android/i.test(ua||'')){
+      return 'intent://'+NUEVA.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(NUEVA)+';end';
+    }
+    return NUEVA;
+  }
+  function irANueva(){ location.assign(urlDestino(navigator.userAgent)); }
+
   /* Barra chica y fija, arriba de la barra de pestañas. Al tocarla se abre el cartel completo. */
   function mostrarBarra(hecho){
     if($('#pase-barra')||$('#pase-nueva')) return;
@@ -184,7 +195,7 @@
       if(navigator.onLine===false){ msg.textContent='Necesitás conexión a internet para pasar a la nueva versión.'; return; }
       msg.textContent=''; ir.disabled=true;
       if(!forzar) lsSet(K_HECHO,'1');
-      Promise.race([limpiarCopias(),new Promise(function(r){setTimeout(r,800);})]).then(function(){ location.assign(NUEVA); });
+      Promise.race([limpiarCopias(),new Promise(function(r){setTimeout(r,800);})]).then(irANueva);
       setTimeout(function(){ ir.disabled=false; },3000);   /* si la nueva se abre encima y se vuelve, el botón queda usable */
     });
     if(nada) nada.addEventListener('click',function(){
