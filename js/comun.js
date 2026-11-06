@@ -101,6 +101,7 @@
      - Para probar en tu celular: agregá ?pase=ver a la dirección (muestra el cartel aunque ya lo hayas usado)
        y ?pase=reiniciar para borrar lo que recuerda este celular. */
   var NUEVA='https://claudiaklenser-dot.github.io/Mujeres_de_Accion/';
+  var NUEVA_PASE=NUEVA+'?desde=v1';   /* la marca hace que la app nueva muestre su pantalla "Último paso: instalá la app nueva" */
   var ETAPA_B=false;
   var K_POSPUESTO='mda_pase_pospuesto', K_HECHO='mda_pase_hecho';
 
@@ -124,7 +125,7 @@
       try{ inp.focus(); inp.select(); inp.setSelectionRange(0,inp.value.length); if(document.execCommand('copy')) return ok(); }catch(e){}
       btn.textContent='Mantené apretado el enlace para copiarlo';
     };
-    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(NUEVA).then(ok,respaldo); } else { respaldo(); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(NUEVA_PASE).then(ok,respaldo); } else { respaldo(); }
   }
 
   /* Dirección a abrir según el celular. En Android se abre en Chrome completo (con un enlace "intent"),
@@ -132,9 +133,9 @@
      Si Chrome no está, Android abre la dirección normal (S.browser_fallback_url). En iPhone y el resto, enlace común. */
   function urlDestino(ua){
     if(/Android/i.test(ua||'')){
-      return 'intent://'+NUEVA.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(NUEVA)+';end';
+      return 'intent://'+NUEVA_PASE.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(NUEVA_PASE)+';end';
     }
-    return NUEVA;
+    return NUEVA_PASE;
   }
   function irANueva(){ location.assign(urlDestino(navigator.userAgent)); }
 
@@ -175,7 +176,7 @@
       h+='<div style="margin-top:14px;padding:14px 16px;border-radius:16px;background:#fff;text-align:left;font-size:.88rem;line-height:1.5;box-shadow:0 1px 6px rgba(0,0,0,.08)">'
         +'<p style="margin:0 0 8px;font-weight:700">En iPhone, para instalarla:</p>'
         +'<ol style="margin:0 0 12px;padding-left:1.2em"><li>Abrí Safari y pegá el enlace.</li><li>Tocá el botón Compartir.</li><li>Elegí “Agregar a inicio”.</li></ol>'
-        +'<input id="pase-url" type="text" readonly value="'+esc(NUEVA)+'" aria-label="Enlace de la versión nueva" style="box-sizing:border-box;width:100%;padding:.6em .8em;margin-bottom:10px;border:1px solid #d9d2c6;border-radius:10px;font:.82rem Mulish,system-ui,sans-serif;color:#3b3b3b;background:#FBF7F1">'
+        +'<input id="pase-url" type="text" readonly value="'+esc(NUEVA_PASE)+'" aria-label="Enlace de la versión nueva" style="box-sizing:border-box;width:100%;padding:.6em .8em;margin-bottom:10px;border:1px solid #d9d2c6;border-radius:10px;font:.82rem Mulish,system-ui,sans-serif;color:#3b3b3b;background:#FBF7F1">'
         +'<button type="button" id="pase-copiar" style="display:block;width:100%;min-height:46px;border:2px solid #4F6B58;border-radius:999px;background:#fff;color:#4F6B58;font:800 .95rem Mulish,system-ui,sans-serif;cursor:pointer">Copiar enlace</button>'
         +'</div>';
     }
