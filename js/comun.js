@@ -91,8 +91,122 @@
     });
   }
 
+  /* ---------- Pase a la versión nueva ----------
+     Cartel a pantalla completa que invita a pasar a la app nueva (otra dirección).
+     - Etapa A (ETAPA_B=false): el cartel grande sale una vez. Si la persona toca "Ahora no",
+       queda una barra chica y fija arriba de la barra de abajo ("Hay una versión nueva de la app · Pasar"),
+       que al tocarla vuelve a abrir el cartel completo.
+     - Etapa B (ETAPA_B=true): sin "Ahora no" y sin barra; el cartel grande aparece siempre.
+     - Sin internet no aparece nada: la app vieja sigue funcionando como siempre.
+     - Para probar en tu celular: agregá ?pase=ver a la dirección (muestra el cartel aunque ya lo hayas usado)
+       y ?pase=reiniciar para borrar lo que recuerda este celular. */
+  var NUEVA='https://claudiaklenser-dot.github.io/Mujeres_de_Accion/';
+  var ETAPA_B=false;
+  var K_POSPUESTO='mda_pase_pospuesto', K_HECHO='mda_pase_hecho';
+
+  function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+  function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
+  function esIOS(){
+    var ua=navigator.userAgent||'';
+    return /iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  }
+  /* Borra las copias de imágenes, PDF y datos guardadas en el celular. Queda lo mínimo para que la app abra. */
+  function limpiarCopias(){
+    if(!window.caches||!caches.keys) return Promise.resolve();
+    return caches.keys().then(function(ks){
+      return Promise.all(ks.filter(function(k){return /^mda-.*-extra$/.test(k);}).map(function(k){return caches.delete(k);}));
+    }).catch(function(){});
+  }
+  function copiarEnlace(inp,btn){
+    var ok=function(){btn.textContent='¡Enlace copiado!'; setTimeout(function(){btn.textContent='Copiar enlace';},2200);};
+    var respaldo=function(){
+      try{ inp.focus(); inp.select(); inp.setSelectionRange(0,inp.value.length); if(document.execCommand('copy')) return ok(); }catch(e){}
+      btn.textContent='Mantené apretado el enlace para copiarlo';
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(NUEVA).then(ok,respaldo); } else { respaldo(); }
+  }
+
+  /* Barra chica y fija, arriba de la barra de pestañas. Al tocarla se abre el cartel completo. */
+  function mostrarBarra(hecho){
+    if($('#pase-barra')||$('#pase-nueva')) return;
+    var tb=$('#tabbar'), alto=(tb&&tb.offsetHeight)||64;
+    var b=document.createElement('div');
+    b.id='pase-barra'; b.setAttribute('role','region'); b.setAttribute('aria-label','Aviso de versión nueva');
+    b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:'+(alto+10)+'px;z-index:16;box-sizing:border-box;width:calc(100% - 24px);max-width:536px;display:flex;align-items:center;gap:10px;padding:9px 10px 9px 14px;border-radius:14px;background:#4F6B58;color:#fff;font:600 .85rem/1.3 Mulish,system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.22)';
+    b.innerHTML='<span style="flex:1">'+esc(hecho?'Ya podés usar la versión nueva':'Hay una versión nueva de la app')+'</span>'
+      +'<button type="button" id="pase-barra-ir" style="flex:none;min-height:36px;border:0;border-radius:999px;padding:.4em 1.1em;background:#fff;color:#4F6B58;font:800 .85rem Mulish,system-ui,sans-serif;cursor:pointer">'+esc(hecho?'Abrir':'Pasar')+'</button>';
+    document.body.appendChild(b);
+    $('#pase-barra-ir',b).addEventListener('click',function(){ if(b.parentNode) b.parentNode.removeChild(b); abrirCartel(hecho,false); });
+  }
+
+  /* Cartel completo a pantalla completa. */
+  function abrirCartel(hecho,forzar){
+    if($('#pase-nueva')) return;
+    var ios=esIOS();
+    var titulo=hecho?'Ya estás en la versión nueva':'Mujeres de Acción tiene una versión nueva';
+    var cuerpo=hecho
+      ?'Si ya instalaste la nueva (la del ícono verde), podés borrar este ícono. Mantené apretado el ícono y elegí “'+(ios?'Eliminar app':'Desinstalar')+'”.'
+      :'Ahora la app te avisa cuando hay algo nuevo, y tiene todo el contenido de siempre. Pasar es un toque y no perdés nada.';
+    var boton=hecho?'Abrir la versión nueva':'Pasar a la nueva versión';
+
+    var o=document.createElement('div');
+    o.id='pase-nueva'; o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); o.setAttribute('aria-labelledby','pase-titulo');
+    o.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;background:#FBF7F1;color:#3b3b3b;font-family:Mulish,system-ui,sans-serif;padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom))';
+
+    var h='<div style="margin:auto;width:100%;max-width:420px;text-align:center">'
+      +'<div aria-hidden="true" style="font-size:2.4rem;line-height:1;margin-bottom:14px">🌿</div>'
+      +'<h1 id="pase-titulo" style="font:600 1.9rem/1.15 Cormorant Garamond,Georgia,serif;margin:0 0 12px;color:#4F6B58">'+esc(titulo)+'</h1>'
+      +'<p style="margin:0 0 24px;font-size:1rem;line-height:1.55">'+esc(cuerpo)+'</p>'
+      +'<button type="button" id="pase-ir" style="display:block;width:100%;min-height:54px;border:0;border-radius:999px;padding:.9em 1.2em;background:#4F6B58;color:#fff;font:800 1.02rem Mulish,system-ui,sans-serif;cursor:pointer">'+esc(boton)+'</button>'
+      +'<p id="pase-msg" role="status" style="min-height:1.3em;margin:10px 0 0;font-size:.85rem;color:#8a3b3b"></p>';
+    if(ios){
+      h+='<div style="margin-top:14px;padding:14px 16px;border-radius:16px;background:#fff;text-align:left;font-size:.88rem;line-height:1.5;box-shadow:0 1px 6px rgba(0,0,0,.08)">'
+        +'<p style="margin:0 0 8px;font-weight:700">En iPhone, para instalarla:</p>'
+        +'<ol style="margin:0 0 12px;padding-left:1.2em"><li>Abrí Safari y pegá el enlace.</li><li>Tocá el botón Compartir.</li><li>Elegí “Agregar a inicio”.</li></ol>'
+        +'<input id="pase-url" type="text" readonly value="'+esc(NUEVA)+'" aria-label="Enlace de la versión nueva" style="box-sizing:border-box;width:100%;padding:.6em .8em;margin-bottom:10px;border:1px solid #d9d2c6;border-radius:10px;font:.82rem Mulish,system-ui,sans-serif;color:#3b3b3b;background:#FBF7F1">'
+        +'<button type="button" id="pase-copiar" style="display:block;width:100%;min-height:46px;border:2px solid #4F6B58;border-radius:999px;background:#fff;color:#4F6B58;font:800 .95rem Mulish,system-ui,sans-serif;cursor:pointer">Copiar enlace</button>'
+        +'</div>';
+    }
+    if(!ETAPA_B){
+      h+='<button type="button" id="pase-ahora-no" style="margin-top:16px;border:0;background:none;padding:10px 14px;color:#6b6b6b;font:600 .9rem Mulish,system-ui,sans-serif;text-decoration:underline;cursor:pointer">Ahora no</button>';
+    }
+    h+='</div>';
+    o.innerHTML=h;
+    document.body.appendChild(o);
+    var overflowAntes=document.documentElement.style.overflow;
+    document.documentElement.style.overflow='hidden';
+
+    var ir=$('#pase-ir',o), msg=$('#pase-msg',o), nada=$('#pase-ahora-no',o), cp=$('#pase-copiar',o), inp=$('#pase-url',o);
+    function cerrar(){ if(o.parentNode) o.parentNode.removeChild(o); document.documentElement.style.overflow=overflowAntes; }
+
+    ir.addEventListener('click',function(){
+      if(navigator.onLine===false){ msg.textContent='Necesitás conexión a internet para pasar a la nueva versión.'; return; }
+      msg.textContent=''; ir.disabled=true;
+      if(!forzar) lsSet(K_HECHO,'1');
+      Promise.race([limpiarCopias(),new Promise(function(r){setTimeout(r,800);})]).then(function(){ location.assign(NUEVA); });
+      setTimeout(function(){ ir.disabled=false; },3000);   /* si la nueva se abre encima y se vuelve, el botón queda usable */
+    });
+    if(nada) nada.addEventListener('click',function(){
+      cerrar();
+      if(!forzar){ lsSet(K_POSPUESTO,String(Date.now())); mostrarBarra(hecho); }
+    });
+    if(cp&&inp) cp.addEventListener('click',function(){ copiarEnlace(inp,cp); });
+    try{ ir.focus({preventScroll:true}); }catch(e){}
+  }
+
+  function puertaNueva(){
+    var q=location.search||'';
+    if(/[?&]pase=reiniciar/.test(q)){ lsDel(K_POSPUESTO); lsDel(K_HECHO); return; }
+    if(/[?&]pase=ver/.test(q)){ abrirCartel(false,true); return; }
+    if($('#pase-nueva')||$('#pase-barra')) return;
+    if(navigator.onLine===false) return;                         /* sin internet la app vieja sigue como siempre */
+    var hecho=lsGet(K_HECHO)==='1';
+    if(!ETAPA_B&&lsGet(K_POSPUESTO)) mostrarBarra(hecho); else abrirCartel(hecho,false);
+  }
+
   var TAB_DE={articulos:'articulos',articulo:'articulos',devocional:'devocional',testimonio:'inicio',recursos:'recursos',contacto:'contacto',inicio:'inicio',editoras:'',mas:''};
-  function iniciarPagina(pagina){ tabbar(Object.prototype.hasOwnProperty.call(TAB_DE,pagina)?TAB_DE[pagina]:'inicio'); registrarSW(); }
+  function iniciarPagina(pagina){ tabbar(Object.prototype.hasOwnProperty.call(TAB_DE,pagina)?TAB_DE[pagina]:'inicio'); registrarSW(); puertaNueva(); }
 
   window.Comun={$:$,esc:esc,get:get,params:params,lista:lista,limpiar:limpiar,conSaltos:conSaltos,bloques:bloques,aviso:aviso,tabbar:tabbar,puntos:puntos,avisos:avisos,iniciarPagina:iniciarPagina};
 })();
