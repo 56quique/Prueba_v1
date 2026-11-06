@@ -1,0 +1,13 @@
+IMÁGENES — nombres que espera la app (formato .webp recomendado)
+
+img/hero.webp                 Foto principal (sin filigranas). Vertical o cuadrada, mujer del lado derecho. ~1200 px de alto.
+img/testimonio.webp           Imagen de la tarjeta del testimonio (cuadrada, ~600 px).
+img/devocional.webp           Imagen de la tarjeta del devocional (cuadrada, ~600 px).
+img/logo.svg                  Logotipo (opcional). Para usarlo, poné "imagen": "img/logo.svg" en data/config.json.
+img/categorias/articulos.webp
+img/categorias/recursos.webp
+img/categorias/contacto.webp
+img/categorias/mas.webp       Miniaturas del carrusel (~400 x 300 px).
+img/articulos/ansiedad.webp   Portada del artículo destacado de ejemplo.
+
+Si una imagen no existe, la app muestra un fondo de color suave en su lugar.

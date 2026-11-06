@@ -1,0 +1,22 @@
+{
+  "nombreApp": "Mujeres de Acción",
+  "logo": {
+    "imagen": "",
+    "linea1": "Mujeres",
+    "linea2": "de Acción"
+  },
+  "hero": {
+    "imagen": "img/hero.webp",
+    "frasePrincipal": "“Una vida con propósito, un diseño que merece ser descubierto.”",
+    "fraseSecundaria": "Bienvenida a un lugar para encontrar inspiración, aprender de la Palabra de Dios y descubrir cómo vivir con propósito en cada área de tu vida. Quiero acompañarte en tu crecimiento y recordarte que tu historia todavía tiene mucho por florecer."
+  },
+  "categorias": [
+    { "nombre": "Artículos", "imagen": "img/categorias/articulos.webp", "href": "articulos.html", "color": "verde" },
+    { "nombre": "Recursos para descargar", "imagen": "img/categorias/recursos.webp", "href": "recursos.html", "color": "rosa" },
+    { "nombre": "Contacto", "imagen": "img/categorias/contacto.webp", "href": "contacto.html", "color": "salvia" },
+    { "nombre": "Más", "imagen": "img/categorias/mas.webp", "href": "mas.html", "color": "lila" }
+  ],
+  "pie": {
+    "texto": "Mujeres de Acción. Todos los derechos reservados."
+  }
+}

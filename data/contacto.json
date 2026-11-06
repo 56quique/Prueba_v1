@@ -1,0 +1,11 @@
+{
+  "correo": "claudiaklenser@gmail.com",
+  "asunto": "Mensaje desde la app Mujeres de Acción",
+  "saludo": "Hola, les escribo desde la app Mujeres de Acción.\n\n",
+  "intro": "Nos encantaría saber de vos. Escribinos y te respondemos.",
+  "oracion": {
+    "titulo": "Pedido de oración",
+    "texto": "Contanos qué querés que presentemos en oración.",
+    "asunto": "Pedido de oración"
+  }
+}

@@ -1,0 +1,3 @@
+PDF.js (Mozilla) — versión 6.4.299, build "legacy" para celulares más antiguos.
+Licencia Apache-2.0 (ver PDFJS-LICENSE.txt). Se usa solo para dibujar la vista previa de los PDF.
+Los archivos se cargan únicamente cuando alguien toca "Vista previa". No hace falta modificarlos.

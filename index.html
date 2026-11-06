@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF7F1">
+<title>Mujeres de Acción</title>
+<meta name="description" content="Un espacio donde la fe, la vida y tus sueños se encuentran.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mujeres de Acción">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Mulish:wght@400;600;700;800&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+<div class="app">
+
+  <header class="hero" id="hero">
+    <div class="hero-foto" id="hero-foto" role="img" aria-label="Mujer contemplando el amanecer"></div>
+    <div class="barra">
+      <div class="logo" id="logo" aria-label="Mujeres de Acción"></div>
+      <button class="menu" type="button" id="btn-menu" aria-haspopup="true" aria-expanded="false" aria-controls="menu-panel" aria-label="Abrir menú">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h20M4 14h20M4 20h20"/></svg>
+      </button>
+    </div>
+    <nav class="menu-panel" id="menu-panel" hidden aria-label="Menú">
+      <a href="index.html">Inicio</a>
+      <a href="articulos.html">Artículos</a>
+      <a href="devocional.html">Devocional</a>
+      <a href="testimonio.html">Testimonio</a>
+      <a href="recursos.html">Recursos para descargar</a>
+      <a href="mas.html">Más</a>
+      <a href="contacto.html">Contacto</a>
+      <a href="editoras.html">Editoras</a>
+    </nav>
+    <div class="hero-texto">
+      <h1 id="hero-frase"></h1>
+      <div class="div-corazon" aria-hidden="true">
+        <svg width="20" height="18" viewBox="0 0 24 22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M12 20S3 14.5 3 8.2C3 5.3 5.2 3.2 7.8 3.2c1.7 0 3.4.9 4.2 2.5.8-1.6 2.5-2.5 4.2-2.5 2.6 0 4.8 2.1 4.8 5C21 14.5 12 20 12 20z"/></svg>
+      </div>
+      <p id="hero-sub"></p>
+    </div>
+  </header>
+
+  <main class="contenido">
+    <section id="instalar" aria-label="Instalar la app"></section>
+    <section id="tarjetas" aria-label="Para hoy"></section>
+
+    <section class="categorias" aria-labelledby="t-cat">
+      <div class="cab">
+        <div>
+          <h2 id="t-cat">Explorá por categorías</h2>
+          <p>Encontrá lo que necesitás, cuando lo necesitás.</p>
+        </div>
+        <div class="flechas">
+          <button type="button" id="prev" aria-label="Anterior"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2L4 7l5 5"/></svg></button>
+          <button type="button" id="next" class="activa" aria-label="Siguiente"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 2l5 5-5 5"/></svg></button>
+        </div>
+      </div>
+      <div class="carrusel" id="carrusel"></div>
+    </section>
+
+    <section id="destacado" class="reveal" aria-label="Artículo destacado"></section>
+  </main>
+
+  <footer class="pie">
+    <p id="pie-texto"></p>
+    <a class="btn-editoras" href="editoras.html">Editoras</a>
+  </footer>
+
+</div>
+<nav class="tabbar" id="tabbar" aria-label="Navegación principal"></nav>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="js/devocional.js"></script>
+<script src="js/novedades.js"></script>
+<script src="js/comun.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
