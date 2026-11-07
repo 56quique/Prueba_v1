@@ -91,19 +91,19 @@
     });
   }
 
-  /* ---------- Pase a la versión nueva ----------
-     Cartel a pantalla completa que invita a pasar a la app nueva (otra dirección).
-     - Etapa A (ETAPA_B=false): el cartel grande sale una vez. Si la persona toca "Ahora no",
-       queda una barra chica y fija arriba de la barra de abajo ("Hay una versión nueva de la app · Pasar"),
-       que al tocarla vuelve a abrir el cartel completo.
-     - Etapa B (ETAPA_B=true): sin "Ahora no" y sin barra; el cartel grande aparece siempre.
-     - Sin internet no aparece nada: la app vieja sigue funcionando como siempre.
-     - Para probar en tu celular: agregá ?pase=ver a la dirección (muestra el cartel aunque ya lo hayas usado)
-       y ?pase=reiniciar para borrar lo que recuerda este celular. */
-  var NUEVA='https://claudiaklenser-dot.github.io/Mujeres_de_Accion/';
-  var NUEVA_PASE=NUEVA+'?desde=v1';   /* la marca hace que la app nueva muestre su pantalla "Último paso: instalá la app nueva" */
-  var ETAPA_B=false;
-  var K_POSPUESTO='mda_pase_pospuesto', K_HECHO='mda_pase_hecho', K_LISTA='mda_pase_lista';
+  /* ---------- Aviso de cierre de esta app ----------
+     Avisa que esta versión dejará de funcionar en una fecha y que la app nueva se instala con el enlace que llegó por WhatsApp.
+     Además muestra el enlace de la app nueva como TEXTO con un botón "Copiar enlace" (no es un enlace tocable a propósito:
+     tocado desde una app instalada se abre en una ventana interna donde no se puede instalar; hay que pegarlo en Chrome o Safari).
+     - Antes de la fecha: cartel completo una vez por día ("Entendido") y, el resto del día, una barra chica fija.
+     - Desde la fecha: cartel que tapa la app y no se puede cerrar.
+     Para cambiar la fecha editá FECHA_CIERRE (formato AAAA-MM-DD).
+     Para probar en tu celular, agregá a la dirección: ?cierre=ver (cartel de aviso), ?cierre=final (cartel de cierre)
+     o ?cierre=reiniciar (borra lo que recuerda el celular). */
+  var FECHA_CIERRE='2026-12-07';
+  var ENLACE_NUEVA='https://claudiaklenser-dot.github.io/Mujeres_de_Accion/?desde=v1';
+  var K_VISTO='mda_cierre_visto';
+  var MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
   function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
   function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
@@ -112,133 +112,93 @@
     var ua=navigator.userAgent||'';
     return /iPad|iPhone|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   }
-  /* Borra las copias de imágenes, PDF y datos guardadas en el celular. Queda lo mínimo para que la app abra. */
-  function limpiarCopias(){
-    if(!window.caches||!caches.keys) return Promise.resolve();
-    return caches.keys().then(function(ks){
-      return Promise.all(ks.filter(function(k){return /^mda-.*-extra$/.test(k);}).map(function(k){return caches.delete(k);}));
-    }).catch(function(){});
-  }
   function copiarEnlace(inp,btn){
     var ok=function(){btn.textContent='¡Enlace copiado!'; setTimeout(function(){btn.textContent='Copiar enlace';},2200);};
     var respaldo=function(){
       try{ inp.focus(); inp.select(); inp.setSelectionRange(0,inp.value.length); if(document.execCommand('copy')) return ok(); }catch(e){}
       btn.textContent='Mantené apretado el enlace para copiarlo';
     };
-    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(NUEVA_PASE).then(ok,respaldo); } else { respaldo(); }
+    if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(ENLACE_NUEVA).then(ok,respaldo); } else { respaldo(); }
   }
-
-  /* Dirección a abrir según el celular. En Android se abre en Chrome completo (con un enlace "intent"),
-     porque en la ventana interna de una app instalada el navegador no ofrece instalar la app nueva.
-     Si Chrome no está, Android abre la dirección normal (S.browser_fallback_url). En iPhone y el resto, enlace común. */
-  function urlDestino(ua){
-    if(/Android/i.test(ua||'')){
-      return 'intent://'+NUEVA_PASE.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(NUEVA_PASE)+';end';
-    }
-    return NUEVA_PASE;
-  }
-  function irANueva(){ location.assign(urlDestino(navigator.userAgent)); }
-
-  /* Estado de esta persona en este celular:
-     'nuevo' = todavía no tocó Pasar; 'hecho' = tocó Pasar, falta confirmar que instaló;
-     'lista' = dijo que ya instaló la app nueva, ahora se le explica cómo borrar este ícono. */
-  function estadoPase(){ if(lsGet(K_LISTA)==='1') return 'lista'; return lsGet(K_HECHO)==='1'?'hecho':'nuevo'; }
+  function claveHoy(){ var d=new Date(); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
+  function aUTC(c){ var p=c.split('-'); return Date.UTC(+p[0],+p[1]-1,+p[2]); }
+  function diasHasta(c){ return Math.round((aUTC(c)-aUTC(claveHoy()))/86400000); }
+  function fechaLarga(c){ var p=c.split('-'); return (+p[2])+' de '+MESES[+p[1]-1]; }
 
   /* Barra chica y fija, arriba de la barra de pestañas. Al tocarla se abre el cartel completo. */
-  function mostrarBarra(est){
-    if($('#pase-barra')||$('#pase-nueva')) return;
+  function barraCierre(){
+    if($('#cierre-barra')||$('#cierre-cartel')) return;
     var tb=$('#tabbar'), alto=(tb&&tb.offsetHeight)||64;
-    var texto=est==='lista'?'Ya podés borrar este ícono':(est==='hecho'?'¿Ya instalaste la app nueva?':'Hay una versión nueva de la app');
     var b=document.createElement('div');
-    b.id='pase-barra'; b.setAttribute('role','region'); b.setAttribute('aria-label','Aviso de versión nueva');
+    b.id='cierre-barra'; b.setAttribute('role','region'); b.setAttribute('aria-label','Aviso: esta app dejará de funcionar');
     b.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:'+(alto+10)+'px;z-index:16;box-sizing:border-box;width:calc(100% - 24px);max-width:536px;display:flex;align-items:center;gap:10px;padding:9px 10px 9px 14px;border-radius:14px;background:#4F6B58;color:#fff;font:600 .85rem/1.3 Mulish,system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.22)';
-    b.innerHTML='<span style="flex:1">'+esc(texto)+'</span>'
-      +'<button type="button" id="pase-barra-ir" style="flex:none;min-height:36px;border:0;border-radius:999px;padding:.4em 1.1em;background:#fff;color:#4F6B58;font:800 .85rem Mulish,system-ui,sans-serif;cursor:pointer">'+esc(est==='nuevo'?'Pasar':'Ver')+'</button>';
+    b.innerHTML='<span style="flex:1">'+esc('Esta app dejará de funcionar el '+fechaLarga(FECHA_CIERRE))+'</span>'
+      +'<button type="button" id="cierre-barra-ver" style="flex:none;min-height:36px;border:0;border-radius:999px;padding:.4em 1.1em;background:#fff;color:#4F6B58;font:800 .85rem Mulish,system-ui,sans-serif;cursor:pointer">Ver</button>';
     document.body.appendChild(b);
-    $('#pase-barra-ir',b).addEventListener('click',function(){ if(b.parentNode) b.parentNode.removeChild(b); abrirCartel(est,false); });
+    $('#cierre-barra-ver',b).addEventListener('click',function(){ if(b.parentNode) b.parentNode.removeChild(b); cartelCierre(false,false); });
   }
 
-  /* Cartel completo a pantalla completa. */
-  function abrirCartel(est,forzar){
-    if($('#pase-nueva')) return;
-    var ios=esIOS(), titulo, cuerpo, boton, sec='';
-    if(est==='lista'){
-      titulo='Ya podés borrar este ícono';
-      cuerpo='Antes, fijate que el ícono verde esté en tu pantalla. Después mantené apretado este ícono y elegí “'+(ios?'Eliminar app':'Desinstalar')+'”.';
-      boton='Entendido'; sec='Todavía no la instalé';
-    }else if(est==='hecho'){
-      titulo='¿Ya instalaste la app nueva?';
-      cuerpo='La del ícono verde. Si todavía no, te llevamos a instalarla.';
-      boton='Todavía no: instalarla'; sec='Sí, ya la tengo';
-    }else{
-      titulo='Mujeres de Acción tiene una versión nueva';
-      cuerpo='Ahora la app te avisa cuando hay algo nuevo, y tiene todo el contenido de siempre. Pasar es un toque y no perdés nada.';
-      boton='Pasar a la nueva versión';
-    }
+  /* Cartel a pantalla completa. final=true: ya pasó la fecha, no se puede cerrar. */
+  function cartelCierre(final,forzar){
+    if($('#cierre-cartel')) return;
+    var n=diasHasta(FECHA_CIERRE);
+    var titulo=final?'Esta app ya no funciona':'Esta app dejará de funcionar el '+fechaLarga(FECHA_CIERRE);
+    var ayuda='Si no lo encontrás, pedí el enlace por mensaje.';
+    var cuerpo=final
+      ?'Para seguir usando Mujeres de Acción, buscá en tu WhatsApp el mensaje con el enlace de la app nueva e instalala. '+ayuda
+      :(n>1?'Faltan '+n+' días. ':(n===1?'Falta 1 día. ':''))+'Buscá en tu WhatsApp el mensaje con el enlace de la app nueva e instalala: es rápido y no perdés nada. '+ayuda;
 
     var o=document.createElement('div');
-    o.id='pase-nueva'; o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); o.setAttribute('aria-labelledby','pase-titulo');
+    o.id='cierre-cartel'; o.setAttribute('role','dialog'); o.setAttribute('aria-modal','true'); o.setAttribute('aria-labelledby','cierre-titulo');
     o.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;background:#FBF7F1;color:#3b3b3b;font-family:Mulish,system-ui,sans-serif;padding:max(24px,env(safe-area-inset-top)) 24px max(24px,env(safe-area-inset-bottom))';
-
     var h='<div style="margin:auto;width:100%;max-width:420px;text-align:center">'
       +'<div aria-hidden="true" style="font-size:2.4rem;line-height:1;margin-bottom:14px">🌿</div>'
-      +'<h1 id="pase-titulo" style="font:600 1.9rem/1.15 Cormorant Garamond,Georgia,serif;margin:0 0 12px;color:#4F6B58">'+esc(titulo)+'</h1>'
-      +'<p style="margin:0 0 24px;font-size:1rem;line-height:1.55">'+esc(cuerpo)+'</p>'
-      +'<button type="button" id="pase-ir" style="display:block;width:100%;min-height:54px;border:0;border-radius:999px;padding:.9em 1.2em;background:#4F6B58;color:#fff;font:800 1.02rem Mulish,system-ui,sans-serif;cursor:pointer">'+esc(boton)+'</button>'
-      +'<p id="pase-msg" role="status" style="min-height:1.3em;margin:10px 0 0;font-size:.85rem;color:#8a3b3b"></p>';
-    if(sec){
-      h+='<button type="button" id="pase-sec" style="display:block;width:100%;min-height:48px;margin-top:4px;border:2px solid #4F6B58;border-radius:999px;background:#fff;color:#4F6B58;font:800 .98rem Mulish,system-ui,sans-serif;cursor:pointer">'+esc(sec)+'</button>';
-    }
-    if(ios&&est!=='lista'){
-      h+='<div style="margin-top:14px;padding:14px 16px;border-radius:16px;background:#fff;text-align:left;font-size:.88rem;line-height:1.5;box-shadow:0 1px 6px rgba(0,0,0,.08)">'
-        +'<p style="margin:0 0 8px;font-weight:700">En iPhone, para instalarla:</p>'
-        +'<ol style="margin:0 0 12px;padding-left:1.2em"><li>Abrí Safari y pegá el enlace.</li><li>Tocá el botón Compartir.</li><li>Elegí “Agregar a inicio”.</li></ol>'
-        +'<input id="pase-url" type="text" readonly value="'+esc(NUEVA_PASE)+'" aria-label="Enlace de la versión nueva" style="box-sizing:border-box;width:100%;padding:.6em .8em;margin-bottom:10px;border:1px solid #d9d2c6;border-radius:10px;font:.82rem Mulish,system-ui,sans-serif;color:#3b3b3b;background:#FBF7F1">'
-        +'<button type="button" id="pase-copiar" style="display:block;width:100%;min-height:46px;border:2px solid #4F6B58;border-radius:999px;background:#fff;color:#4F6B58;font:800 .95rem Mulish,system-ui,sans-serif;cursor:pointer">Copiar enlace</button>'
-        +'</div>';
-    }
-    if(!ETAPA_B&&est!=='lista'){
-      h+='<button type="button" id="pase-ahora-no" style="margin-top:16px;border:0;background:none;padding:10px 14px;color:#6b6b6b;font:600 .9rem Mulish,system-ui,sans-serif;text-decoration:underline;cursor:pointer">Ahora no</button>';
+      +'<h1 id="cierre-titulo" style="font:600 1.9rem/1.15 Cormorant Garamond,Georgia,serif;margin:0 0 12px;color:#4F6B58">'+esc(titulo)+'</h1>'
+      +'<p style="margin:0 0 24px;font-size:1rem;line-height:1.55">'+esc(cuerpo)+'</p>';
+    var ios=esIOS();
+    h+='<div style="margin:0 0 20px;padding:14px 16px;border-radius:16px;background:#fff;text-align:left;font-size:.9rem;line-height:1.5;box-shadow:0 1px 6px rgba(0,0,0,.08)">'
+      +'<p style="margin:0 0 8px;font-weight:700">¿Perdiste el mensaje? Copiá el enlace:</p>'
+      +'<input id="cierre-url" type="text" readonly value="'+esc(ENLACE_NUEVA)+'" aria-label="Enlace de la app nueva" style="box-sizing:border-box;width:100%;padding:.6em .8em;margin-bottom:10px;border:1px solid #d9d2c6;border-radius:10px;font:.82rem Mulish,system-ui,sans-serif;color:#3b3b3b;background:#FBF7F1">'
+      +'<button type="button" id="cierre-copiar" style="display:block;width:100%;min-height:48px;border:2px solid #4F6B58;border-radius:999px;background:#fff;color:#4F6B58;font:800 .98rem Mulish,system-ui,sans-serif;cursor:pointer">Copiar enlace</button>'
+      +'<ol style="margin:12px 0 0;padding-left:1.2em">'
+      +'<li>Tocá <b>Copiar enlace</b>.</li>'
+      +'<li>Abrí <b>'+(ios?'Safari':'Chrome')+'</b> y pegá el enlace en la barra de arriba.</li>'
+      +'<li>'+(ios?'Tocá <b>Ir</b>, después <b>Compartir</b> y elegí <b>“Agregar a inicio”</b>.':'Tocá <b>Ir</b> y después <b>Instalar la app</b>.')+'</li>'
+      +'</ol></div>';
+    if(!final){
+      h+='<button type="button" id="cierre-ok" style="display:block;width:100%;min-height:54px;border:0;border-radius:999px;padding:.9em 1.2em;background:#4F6B58;color:#fff;font:800 1.02rem Mulish,system-ui,sans-serif;cursor:pointer">Entendido</button>';
     }
     h+='</div>';
     o.innerHTML=h;
     document.body.appendChild(o);
     var overflowAntes=document.documentElement.style.overflow;
     document.documentElement.style.overflow='hidden';
-
-    var ir=$('#pase-ir',o), msg=$('#pase-msg',o), nada=$('#pase-ahora-no',o), cp=$('#pase-copiar',o), inp=$('#pase-url',o), segundo=$('#pase-sec',o);
-    function cerrar(){ if(o.parentNode) o.parentNode.removeChild(o); document.documentElement.style.overflow=overflowAntes; }
-    function aBarra(){ cerrar(); if(!forzar&&!ETAPA_B){ lsSet(K_POSPUESTO,String(Date.now())); mostrarBarra(est); } }
-
-    ir.addEventListener('click',function(){
-      if(est==='lista'){ aBarra(); return; }                        /* "Entendido" */
-      if(navigator.onLine===false){ msg.textContent='Necesitás conexión a internet para pasar a la nueva versión.'; return; }
-      msg.textContent=''; ir.disabled=true;
-      if(!forzar){ lsSet(K_HECHO,'1'); lsDel(K_POSPUESTO); }       /* al volver, ve la pregunta "¿Ya instalaste la app nueva?" */
-      Promise.race([limpiarCopias(),new Promise(function(r){setTimeout(r,800);})]).then(irANueva);
-      setTimeout(function(){ ir.disabled=false; },3000);           /* si la nueva se abre encima y se vuelve, el botón queda usable */
-    });
-    if(segundo) segundo.addEventListener('click',function(){
-      if(est==='hecho'){ if(!forzar) lsSet(K_LISTA,'1'); cerrar(); abrirCartel('lista',forzar); }        /* "Sí, ya la tengo" */
-      else { lsDel(K_LISTA); cerrar(); abrirCartel('hecho',forzar); }                                   /* "Todavía no la instalé" */
-    });
-    if(nada) nada.addEventListener('click',aBarra);
+    var ok=$('#cierre-ok',o);
+    var cp=$('#cierre-copiar',o), inp=$('#cierre-url',o);
     if(cp&&inp) cp.addEventListener('click',function(){ copiarEnlace(inp,cp); });
-    try{ ir.focus({preventScroll:true}); }catch(e){}
+    if(ok){
+      ok.addEventListener('click',function(){
+        if(o.parentNode) o.parentNode.removeChild(o);
+        document.documentElement.style.overflow=overflowAntes;
+        if(!forzar) lsSet(K_VISTO,claveHoy());
+        barraCierre();
+      });
+      try{ ok.focus({preventScroll:true}); }catch(e){}
+    }
   }
 
-  function puertaNueva(){
+  function avisoCierre(){
     var q=location.search||'';
-    if(/[?&]pase=reiniciar/.test(q)){ lsDel(K_POSPUESTO); lsDel(K_HECHO); lsDel(K_LISTA); return; }
-    if(/[?&]pase=ver/.test(q)){ abrirCartel('nuevo',true); return; }
-    if($('#pase-nueva')||$('#pase-barra')) return;
-    if(navigator.onLine===false) return;                         /* sin internet la app vieja sigue como siempre */
-    var est=estadoPase();
-    if(!ETAPA_B&&lsGet(K_POSPUESTO)) mostrarBarra(est); else abrirCartel(est,false);
+    if(/[?&]cierre=reiniciar/.test(q)){ lsDel(K_VISTO); return; }
+    if(/[?&]cierre=final/.test(q)){ cartelCierre(true,true); return; }
+    if(/[?&]cierre=ver/.test(q)){ cartelCierre(false,true); return; }
+    if($('#cierre-cartel')||$('#cierre-barra')) return;
+    if(diasHasta(FECHA_CIERRE)<=0){ cartelCierre(true,false); return; }      /* ya llegó la fecha */
+    if(lsGet(K_VISTO)!==claveHoy()) cartelCierre(false,false); else barraCierre();
   }
 
   var TAB_DE={articulos:'articulos',articulo:'articulos',devocional:'devocional',testimonio:'inicio',recursos:'recursos',contacto:'contacto',inicio:'inicio',editoras:'',mas:''};
-  function iniciarPagina(pagina){ tabbar(Object.prototype.hasOwnProperty.call(TAB_DE,pagina)?TAB_DE[pagina]:'inicio'); registrarSW(); puertaNueva(); }
+  function iniciarPagina(pagina){ tabbar(Object.prototype.hasOwnProperty.call(TAB_DE,pagina)?TAB_DE[pagina]:'inicio'); registrarSW(); avisoCierre(); }
 
   window.Comun={$:$,esc:esc,get:get,params:params,lista:lista,limpiar:limpiar,conSaltos:conSaltos,bloques:bloques,aviso:aviso,tabbar:tabbar,puntos:puntos,avisos:avisos,iniciarPagina:iniciarPagina};
 })();
